@@ -44,11 +44,11 @@ var ErrEmptyCircle = errors.New("empty circle")
 
 // Consistent holds the information about the members of the consistent hash circle.
 type Consistent struct {
-	circle           map[uint32]string
-	members          map[string]bool
-	sortedHashes     uints
-	NumberOfReplicas int
-	count            int64
+	circle           map[uint32]string          //circle[hah(${member})]=${member}
+	members          map[string]bool            //members[${member}]=true
+	sortedHashes     uints                      //array: circle中所有keys的有序排列数组，每次circle有变化后，都需要更新该数组
+	NumberOfReplicas int                        //member的虚拟节点数
+	count            int64                      //members总数
 	scratch          [64]byte
 	sync.RWMutex
 }
@@ -106,7 +106,7 @@ func (c *Consistent) remove(elt string) {
 
 // Set sets all the elements in the hash.  If there are existing elements not
 // present in elts, they will be removed.
-func (c *Consistent) Set(elts []string) {
+func (c *Consistent) Set(elts []string) {     //重置所有members
 	c.Lock()
 	defer c.Unlock()
 	for k := range c.members {
@@ -152,7 +152,7 @@ func (c *Consistent) Get(name string) (string, error) {
 	return c.circle[c.sortedHashes[i]], nil
 }
 
-func (c *Consistent) search(key uint32) (i int) {
+func (c *Consistent) search(key uint32) (i int) {// O(lgN)
 	f := func(x int) bool {
 		return c.sortedHashes[x] > key
 	}
@@ -193,7 +193,7 @@ func (c *Consistent) GetTwo(name string) (string, string, error) {
 }
 
 // GetN returns the N closest distinct elements to the name input in the circle.
-func (c *Consistent) GetN(name string, n int) ([]string, error) {
+func (c *Consistent) GetN(name string, n int) ([]string, error) {// O(lgN) * K
 	c.RLock()
 	defer c.RUnlock()
 
