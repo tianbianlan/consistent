@@ -53,6 +53,13 @@ type Consistent struct {
 	sync.RWMutex
 }
 
+/*
+    优化点：
+    	1. 没节点配置不同的NumberOfReplicas，可适用于不同性能配置的物理机
+	2. 使用树形结构（如红黑树），可适用节点频繁变更的应用场景(如需getN方法，可在红黑树中添加next指针)
+	3. 每个节点附带节点跳跃表，可以在查找过程中快速跳跃，减少查找时间，但同时，会增加内存空间的消耗
+*/
+
 // New creates a new Consistent object with a default setting of 20 replicas for each entry.
 //
 // To change the number of replicas, set NumberOfReplicas before adding entries.
